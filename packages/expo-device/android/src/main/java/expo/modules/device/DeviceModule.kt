@@ -11,16 +11,22 @@ import android.util.DisplayMetrics
 import android.view.WindowManager
 import com.facebook.device.yearclass.YearClass
 import expo.modules.core.utilities.EmulatorUtilities
-import expo.modules.kotlin.exception.Exceptions
-import expo.modules.kotlin.modules.Module
-import expo.modules.kotlin.modules.ModuleDefinition
+import io.github.expo.modules.v2.Constant
+import io.github.expo.modules.v2.Enumerable
+import io.github.expo.modules.v2.ExpoModule
+import io.github.expo.modules.v2.JS
+import io.github.expo.modules.v2.Module
+import io.github.expo.modules.v2.react.androidContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.math.pow
 import kotlin.math.sqrt
 
+@ExpoModule("ExpoDevice")
 class DeviceModule : Module() {
   // Keep this enum in sync with JavaScript
-  enum class DeviceType(val JSValue: Int) {
+  enum class DeviceType(val JSValue: Int) : Enumerable {
     UNKNOWN(0),
     PHONE(1),
     TABLET(2),
@@ -28,156 +34,162 @@ class DeviceModule : Module() {
     TV(4)
   }
 
-  private val context: Context
-    get() = appContext.reactContext ?: throw Exceptions.ReactContextLost()
+  @JS
+  @Constant
+  val isDevice: Boolean
+    get() = !isRunningOnEmulator
 
-  override fun definition() = ModuleDefinition {
-    Name("ExpoDevice")
+  @JS
+  @Constant
+  val brand: String
+    get() = Build.BRAND
 
-    Constant("isDevice") {
-      !isRunningOnEmulator
-    }
+  @JS
+  @Constant
+  val manufacturer: String
+    get() = Build.MANUFACTURER
 
-    Constant("brand") {
-      Build.BRAND
-    }
+  @JS
+  @Constant
+  val modelName: String
+    get() = Build.MODEL
 
-    Constant("manufacturer") {
-      Build.MANUFACTURER
-    }
+  @JS
+  @Constant
+  val designName: String
+    get() = Build.DEVICE
 
-    Constant("modelName") {
-      Build.MODEL
-    }
+  @JS
+  @Constant
+  val productName: String
+    get() = Build.PRODUCT
 
-    Constant("designName") {
-      Build.DEVICE
-    }
+  @JS
+  @Constant
+  val deviceYearClass: Int
+    get() = YearClass.get(androidContext)
 
-    Constant("productName") {
-      Build.PRODUCT
-    }
-
-    Constant("deviceYearClass") {
-      deviceYearClass
-    }
-
-    Constant("totalMemory") {
+  @JS
+  @Constant
+  val totalMemory: Long
+    get() {
       val memoryInfo = ActivityManager.MemoryInfo()
-      (context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager).getMemoryInfo(memoryInfo)
-      memoryInfo.totalMem
+      (androidContext.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager).getMemoryInfo(memoryInfo)
+      return memoryInfo.totalMem
     }
 
-    Constant("deviceType") {
-      getDeviceType(context).JSValue
+  @JS
+  @Constant
+  val deviceType: DeviceType
+    get() = getDeviceType(androidContext)
+
+  @JS
+  @Constant
+  val supportedCpuArchitectures: Array<String>?
+    get() = Build.SUPPORTED_ABIS?.takeIf { it.isNotEmpty() }
+
+  @JS
+  @Constant
+  val osName: String
+    get() = Build.VERSION.BASE_OS.takeIf { it.isNotEmpty() } ?: "Android"
+
+  @JS
+  @Constant
+  val osVersion: String
+    get() = Build.VERSION.RELEASE
+
+  @JS
+  @Constant
+  val osBuildId: String
+    get() = Build.DISPLAY
+
+  @JS
+  @Constant
+  val osInternalBuildId: String
+    get() = Build.ID
+
+  @JS
+  @Constant
+  val osBuildFingerprint: String
+    get() = Build.FINGERPRINT
+
+  @JS
+  @Constant
+  val platformApiLevel: Int
+    get() = Build.VERSION.SDK_INT
+
+  @JS
+  @Constant
+  val deviceName: String?
+    get() = if (Build.VERSION.SDK_INT <= 31) {
+      Settings.Secure.getString(androidContext.contentResolver, "bluetooth_name")
+    } else {
+      Settings.Global.getString(androidContext.contentResolver, Settings.Global.DEVICE_NAME)
     }
 
-    Constant("supportedCpuArchitectures") {
-      Build.SUPPORTED_ABIS?.takeIf { it.isNotEmpty() }
-    }
+  @JS
+  suspend fun getDeviceTypeAsync(): DeviceType = withContext(Dispatchers.IO) {
+    getDeviceType(androidContext)
+  }
 
-    Constant("osName") {
-      systemName
-    }
+  @JS
+  suspend fun getUptimeAsync(): Double = SystemClock.uptimeMillis().toDouble()
 
-    Constant("osVersion") {
-      Build.VERSION.RELEASE
-    }
-
-    Constant("osBuildId") {
-      Build.DISPLAY
-    }
-
-    Constant("osInternalBuildId") {
-      Build.ID
-    }
-
-    Constant("osBuildFingerprint") {
-      Build.FINGERPRINT
-    }
-
-    Constant("platformApiLevel") {
-      Build.VERSION.SDK_INT
-    }
-
-    Constant("deviceName") {
-      if (Build.VERSION.SDK_INT <= 31) {
-        Settings.Secure.getString(context.contentResolver, "bluetooth_name")
-      } else {
-        Settings.Global.getString(context.contentResolver, Settings.Global.DEVICE_NAME)
-      }
-    }
-
-    AsyncFunction<Int>("getDeviceTypeAsync") {
-      return@AsyncFunction getDeviceType(context).JSValue
-    }
-
-    AsyncFunction<Double>("getUptimeAsync") {
-      return@AsyncFunction SystemClock.uptimeMillis().toDouble()
-    }
-
-    AsyncFunction<Double>("getMaxMemoryAsync") {
-      val maxMemory = Runtime.getRuntime().maxMemory()
-      return@AsyncFunction if (maxMemory != Long.MAX_VALUE) {
-        maxMemory.toDouble()
-      } else {
-        -1.0
-      }
-    }
-
-    AsyncFunction<Boolean>("isRootedExperimentalAsync") {
-      val isRooted: Boolean
-      val isDevice = !isRunningOnEmulator
-
-      val buildTags = Build.TAGS
-      isRooted = if (isDevice && buildTags != null && buildTags.contains("test-keys")) {
-        true
-      } else {
-        if (File("/system/app/Superuser.apk").exists()) {
-          true
-        } else {
-          isDevice && File("/system/xbin/su").exists()
-        }
-      }
-
-      return@AsyncFunction isRooted
-    }
-
-    AsyncFunction<Boolean>("isSideLoadingEnabledAsync") {
-      return@AsyncFunction if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-        @Suppress("DEPRECATION")
-        Settings.Global.getInt(
-          context.applicationContext.contentResolver,
-          Settings.Global.INSTALL_NON_MARKET_APPS,
-          0
-        ) == 1
-      } else {
-        try {
-          context.applicationContext.packageManager.canRequestPackageInstalls()
-        } catch (e: SecurityException) {
-          // throws when REQUEST_INSTALL_PACKAGES is not declared
-          throw MissingRequestInstallPackagesPermissionException(e)
-        }
-      }
-    }
-
-    AsyncFunction<List<String>>("getPlatformFeaturesAsync") {
-      val allFeatures = context.applicationContext.packageManager.systemAvailableFeatures
-      return@AsyncFunction allFeatures.filterNotNull().map { it.name }
-    }
-
-    AsyncFunction("hasPlatformFeatureAsync") { feature: String ->
-      return@AsyncFunction context.applicationContext.packageManager.hasSystemFeature(feature)
+  @JS
+  suspend fun getMaxMemoryAsync(): Double {
+    val maxMemory = Runtime.getRuntime().maxMemory()
+    return if (maxMemory != Long.MAX_VALUE) {
+      maxMemory.toDouble()
+    } else {
+      -1.0
     }
   }
 
-  private val deviceYearClass: Int
-    get() = YearClass.get(context)
+  @JS
+  suspend fun isRootedExperimentalAsync(): Boolean = withContext(Dispatchers.IO) {
+    val isDevice = !isRunningOnEmulator
 
-  private val systemName: String
-    get() {
-      return Build.VERSION.BASE_OS.takeIf { it.isNotEmpty() } ?: "Android"
+    val buildTags = Build.TAGS
+    if (isDevice && buildTags != null && buildTags.contains("test-keys")) {
+      true
+    } else {
+      if (File("/system/app/Superuser.apk").exists()) {
+        true
+      } else {
+        isDevice && File("/system/xbin/su").exists()
+      }
     }
+  }
+
+  @JS
+  suspend fun isSideLoadingEnabledAsync(): Boolean = withContext(Dispatchers.IO) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+      @Suppress("DEPRECATION")
+      Settings.Global.getInt(
+        androidContext.applicationContext.contentResolver,
+        Settings.Global.INSTALL_NON_MARKET_APPS,
+        0
+      ) == 1
+    } else {
+      try {
+        androidContext.applicationContext.packageManager.canRequestPackageInstalls()
+      } catch (e: SecurityException) {
+        // throws when REQUEST_INSTALL_PACKAGES is not declared
+        throw MissingRequestInstallPackagesPermissionException(e)
+      }
+    }
+  }
+
+  @JS
+  suspend fun getPlatformFeaturesAsync(): List<String?> = withContext(Dispatchers.IO) {
+    val allFeatures = androidContext.applicationContext.packageManager.systemAvailableFeatures
+    allFeatures.filterNotNull().map { it.name }
+  }
+
+  @JS
+  suspend fun hasPlatformFeatureAsync(feature: String): Boolean = withContext(Dispatchers.IO) {
+    androidContext.applicationContext.packageManager.hasSystemFeature(feature)
+  }
 
   companion object {
     private val isRunningOnEmulator: Boolean
