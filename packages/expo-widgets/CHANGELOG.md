@@ -1,5 +1,11 @@
 # Changelog
 
+## 58.0.26
+
+### Patch Changes
+
+- [Android] Upgrade WorkManager to 2.10.5 so minified release builds retain the input merger constructor without package-local keep rules. ([#52507](https://github.com/expo/expo/pull/52507) by [@Ubax](https://github.com/Ubax))
+
 ## 58.0.25
 
 ### Patch Changes

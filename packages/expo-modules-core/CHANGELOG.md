@@ -1,5 +1,11 @@
 # Changelog
 
+## 58.0.29
+
+### Patch Changes
+
+- [Android] Fix `Enum` to JS conversion failing in minified builds when constructor parameter names are not kept. ([#51677](https://github.com/expo/expo/pull/51677) by [@sergeich](https://github.com/sergeich))
+
 ## 58.0.28
 
 ### Patch Changes

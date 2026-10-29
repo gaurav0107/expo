@@ -1,5 +1,22 @@
 # bare-expo
 
+## 0.0.17
+
+### Patch Changes
+
+- Updated dependencies. ([#52447](https://github.com/expo/expo/pull/52447), [#52321](https://github.com/expo/expo/pull/52321), [#52195](https://github.com/expo/expo/pull/52195), [#52379](https://github.com/expo/expo/pull/52379), [#52456](https://github.com/expo/expo/pull/52456), [#51893](https://github.com/expo/expo/pull/51893), [#51983](https://github.com/expo/expo/pull/51983), [#51857](https://github.com/expo/expo/pull/51857), [#52507](https://github.com/expo/expo/pull/52507))
+  - expo@58.0.22
+  - expo-router@58.0.29
+  - expo-audio@58.0.11
+  - expo-updates@58.0.20
+  - expo-observe@58.0.17
+  - native-component-list@0.0.16
+  - test-suite@1.0.16
+  - expo-brownfield@58.0.17
+  - expo-background-fetch@58.0.12
+  - expo-image@58.0.18
+  - expo-dev-menu@58.0.12
+
 ## 0.0.16
 
 ### Patch Changes

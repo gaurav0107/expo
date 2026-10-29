@@ -1,5 +1,22 @@
 # test-suite
 
+## 1.0.16
+
+### Patch Changes
+
+- Updated dependencies. ([#52447](https://github.com/expo/expo/pull/52447), [#51677](https://github.com/expo/expo/pull/51677), [#52321](https://github.com/expo/expo/pull/52321), [#51572](https://github.com/expo/expo/pull/51572), [#52195](https://github.com/expo/expo/pull/52195), [#52401](https://github.com/expo/expo/pull/52401), [#51701](https://github.com/expo/expo/pull/51701), [#52456](https://github.com/expo/expo/pull/52456), [#51893](https://github.com/expo/expo/pull/51893), [#51983](https://github.com/expo/expo/pull/51983), [#51857](https://github.com/expo/expo/pull/51857), [#52507](https://github.com/expo/expo/pull/52507))
+  - expo@58.0.22
+  - expo-router@58.0.29
+  - expo-modules-core@58.0.29
+  - expo-audio@58.0.11
+  - expo-gl@58.0.4
+  - expo-sqlite@58.0.15
+  - expo-task-manager@58.0.13
+  - expo-observe@58.0.17
+  - expo-constants@58.0.14
+  - expo-background-fetch@58.0.12
+  - expo-image@58.0.18
+
 ## 1.0.15
 
 ### Patch Changes
